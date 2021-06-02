@@ -20,12 +20,22 @@ user-library-modify, user-library-read,
 user-read-email, user-read-private"""
 
 # Finds the most recently added albums in a shitty loop since I don't know how to parse a larger album data set yet
-def find_recently_saved_albums(amount, offset):
+def find_recently_saved_albums(amount, off):
     recently_saved_albums = []
     for i in range(0,amount):
-        new_album = sp.current_user_saved_albums(limit = 1, offset = offset + i, market = "from_token")
+        new_album = sp.current_user_saved_albums(limit = 1, offset = (off + i), market = "from_token")
         recently_saved_albums.append(new_album)
+
     return recently_saved_albums
+
+# Finds the most recently saved songs
+def find_recently_saved_songs(amount, off):
+    recently_saved_songs = []
+    for i in range(0, amount):
+        new_songs = sp.current_user_saved_songs(limit = 1, offset = (off + i), market = "from_token")
+        recently_saved_songs.append(new_album)
+
+    return recently_saved_songs
 
 # Parses album data to get track uris
 def get_track_uris_from_album(album):
@@ -42,6 +52,7 @@ def get_track_uris_from_album(album):
 # Parses album data to get total songs
 def get_amount_of_songs_in_album(album):
     return album['items'][0]['album']['total_tracks']
+
 
 # Adds the most recently saved albums to a playlist
 def replace_recently_added_playlist(amount, offset):
@@ -71,61 +82,82 @@ def split_list_below_100(tracks, storage):
         storage = split_list_below_100(tracks[100:], storage)
         return storage
 
+
 # Set environment to most recent album
-def reset_most_recent():
+def reset_most_recent_album():
     album = find_recently_saved_albums(1, 0)
     album_id = album[0]['items'][0]['album']['uri']
     os.environ['MOST_RECENT_ALBUM'] = album_id
     dotenv.set_key(dotenv_file, 'MOST_RECENT_ALBUM', os.environ['MOST_RECENT_ALBUM'])
 
+
 # Check newest most recent album against stored most recent album. Returns True if there is a new album, false otherwise
 def check_if_new_saved_album():
     album = find_recently_saved_albums(1, 0)
     album_id = album[0]['items'][0]['album']['uri']
-
-    if (album_id != os.getenv["MOST_RECENT_ALBUM"]):
+    if (album_id != os.environ['MOST_RECENT_ALBUM']):
         return True
     else:
         return False
 
+
 # Finds how many albums have been added since latest check
 def count_new_albums():
-    dotenv_file = dotenv.find_dotenv()
-    dotenv.load_dotenv(dotenv_file)
-
     counter = 0;
-    while (album != os.getenv["MOST_RECENT_ALBUM"]):
+    album_id = 0;
+    while (album_id != os.environ['MOST_RECENT_ALBUM']):
         album = find_recently_saved_albums(1, counter)
+        album_id = album[0]['items'][0]['album']['uri']
         counter += 1
     
-    return counter
+    return counter - 1
+
 
 # Update everything playlist
 def update_everything():
     EVERYTHING = "3ZqjihXebfS117lF9bi9FI"
-    new_albums = find_recently_saved(count_new_albums(), 0)
+    new_albums = find_recently_saved_albums(count_new_albums(), 0)
     track_uris = []
     for album in new_albums:
         track_uris = track_uris + get_track_uris_from_album(album)
     
     split_track_uris = split_list_below_100(track_uris, [])
-    for tracks in split_track_uris.reverse:
+    for tracks in split_track_uris:
         sp.playlist_add_items(EVERYTHING, tracks)
 
+
+def check_if_new_saved_song()
+    song = find_recently_saved_albums(1, 0)
+    song_id = album[0]['items'][0]['album']['uri']
+    if (album_id != os.environ['MOST_RECENT_SONG']):
+        return True
+    else:
+        return False
+
+
+def reset_most_recent_song():
+    song = find_recently_saved_songs(1, 0)
+    song_id = song[0]['items'][0]['album']['uri']
+    os.environ['MOST_RECENT_SONG'] = song_id
+    dotenv.set_key(dotenv_file, 'MOST_RECENT_SONG', os.environ['MOST_RECENT_SONG'])
+
+
 # Checks if new albums have been added and updates playlists
-def update():
+def update()
     dotenv_file = dotenv.find_dotenv()
     dotenv.load_dotenv(dotenv_file)
-
     if check_if_new_saved_album():
         update_everything()
-        replace_recently_added_playlist(50, 0)
-        reset_most_recent()
+        replace_recently_added_playlist(40, 0)
+        reset_most_recent_album()
 
+
+
+
+# 
 # query all artist albums crosscheck against saved playlists to make new playlist. change name
-# makeds most recently added album env variable
-# checks every minute whether most recently added = above album and if not runs replace_recently_added and add to everything functionsz
+
 
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-# replace_recently_added_playlist(50, 0)
+update()
