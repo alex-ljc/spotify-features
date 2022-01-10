@@ -1,13 +1,13 @@
+#!/usr/bin/env python3
+
 import os
 import dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-
-
-dotenv_file = dotenv.find_dotenv()
-dotenv.load_dotenv(dotenv_file)
+import time
 
 RECENTLY_ADDED = "3BZP1mB69SWnSNCy4nfxXX"
+QUEUE_OF_SHIT = '7kSoTKPlSLr0BKkFfOLhY2'
 
 scope = """ugc-image-upload, 
 user-read-recently-played, user-top-read, user-read-playback-position,
@@ -32,13 +32,13 @@ def find_recently_saved_albums(amount, off):
 def find_recently_saved_songs(amount, off):
     recently_saved_songs = []
     for i in range(0, amount):
-        new_songs = sp.current_user_saved_songs(limit = 1, offset = (off + i), market = "from_token")
-        recently_saved_songs.append(new_album)
+        new_songs = sp.current_user_saved_tracks(limit = 1, offset = (off + i), market = "from_token")
+        recently_saved_songs.append(new_songs)
 
     return recently_saved_songs
 
 # Parses album data to get track uris
-def get_track_uris_from_album(album):
+def get_track_uris_from_albums(album):
     track_uris = []
     total = album['items'][0]['album']['total_tracks']
     
@@ -50,7 +50,7 @@ def get_track_uris_from_album(album):
 
 
 # Parses album data to get total songs
-def get_amount_of_songs_in_album(album):
+def get_amount_of_songs_in_albums(album):
     return album['items'][0]['album']['total_tracks']
 
 
@@ -61,14 +61,15 @@ def replace_recently_added_playlist(amount, offset):
     track_uris = []
     sp.playlist_replace_items(RECENTLY_ADDED, track_uris)
     for album in recently_added_albums:
-        track_uris = track_uris + get_track_uris_from_album(album)
+        track_uris = track_uris + get_track_uris_from_albums(album)
     
     size = len(track_uris)
     
-    print(size)
     split_track_uris = split_list_below_100(track_uris, [])
     for tracks in split_track_uris:
         sp.playlist_add_items(RECENTLY_ADDED, tracks)
+    
+    print(f"Recently played has {size} songs")
 
 # Splits a larger list of tracks into a smaller lists with max size of 100
 def split_list_below_100(tracks, storage):
@@ -119,17 +120,18 @@ def update_everything():
     new_albums = find_recently_saved_albums(count_new_albums(), 0)
     track_uris = []
     for album in new_albums:
-        track_uris = track_uris + get_track_uris_from_album(album)
+        track_uris = track_uris + get_track_uris_from_albums(album)
     
     split_track_uris = split_list_below_100(track_uris, [])
     for tracks in split_track_uris:
         sp.playlist_add_items(EVERYTHING, tracks)
+    print(f"Updated everything with {len(track_uris)} songs")
 
 
-def check_if_new_saved_song()
-    song = find_recently_saved_albums(1, 0)
-    song_id = album[0]['items'][0]['album']['uri']
-    if (album_id != os.environ['MOST_RECENT_SONG']):
+def check_if_new_saved_song():
+    song = find_recently_saved_songs(1, 0)
+    song_id = song[0]['items'][0]['track']['uri']
+    if (song_id != os.environ['MOST_RECENT_SONG']):
         return True
     else:
         return False
@@ -137,27 +139,80 @@ def check_if_new_saved_song()
 
 def reset_most_recent_song():
     song = find_recently_saved_songs(1, 0)
-    song_id = song[0]['items'][0]['album']['uri']
+    song_id = song[0]['items'][0]['track']['uri']
     os.environ['MOST_RECENT_SONG'] = song_id
     dotenv.set_key(dotenv_file, 'MOST_RECENT_SONG', os.environ['MOST_RECENT_SONG'])
 
+def count_new_songs():
+    counter = 0
+    song_id = 0
+    while (song_id != os.environ['MOST_RECENT_SONG']):
+        song = find_recently_saved_songs(1, counter)
+        song_id = song[0]['items'][0]['track']['uri']
+        counter += 1
+
+    return counter - 1
 
 # Checks if new albums have been added and updates playlists
-def update()
+def update():
     dotenv_file = dotenv.find_dotenv()
     dotenv.load_dotenv(dotenv_file)
     if check_if_new_saved_album():
         update_everything()
-        replace_recently_added_playlist(40, 0)
+        replace_recently_added_playlist(45, 0)
         reset_most_recent_album()
+    
+    if check_if_new_saved_song():
+        update_liked()
+        reset_most_recent_song()
 
+def update_liked():
+    LIKED = "1Eb6PKpnm0iz68zmNkT5rY"
+    new_songs = find_recently_saved_songs(count_new_songs(), 0)
+    tracks = []
+    for song in new_songs:
+        uri = song['items'][0]['track']['uri']
+        tracks.append(uri)
 
+    split_track_uris = split_list_below_100(tracks, [])
+    for tracks in split_track_uris:
+        sp.playlist_add_items(LIKED, tracks)
 
+    print(f"Updated liked with {len(tracks)} songs")
 
-# 
-# query all artist albums crosscheck against saved playlists to make new playlist. change name
+def loop_current_album(x):
+    currently_playing_song = sp.current_user_playing_track()
+    if currently_playing_song == None:
+        currently_playing_song = sp.current_user_recently_played(limit=1)
+        album_id = currently_playing_song['items'][0]['track']['album']['uri']
+    else:
+        album_id = currently_playing_song['item']['album']['id']
+    album = sp.album(album_id)
+    for i in range(0, x):
+        add_album_to_queue(album)
+        time.sleep(get_duration_of_album(album))
+        while True:
+            if sp.current_user_playing(limit=1)['item']['track_number'] == album['total_tracks']:
+                continue
+            time.sleep(5)
+    
+def add_album_to_queue(album):
+    for song in album['tracks']['items']:
+        sp.add_to_queue(song['uri'])
+    
+def get_duration_of_album(album):
+    length = 0
+    for i in range(0, album['total_tracks']):
+        length += int(album['tracks']['items'][i]['duration_ms'])
+    
+    return length / 1000
+        
+def clear_playlist(playlist_id):
+    playlist_tracks = sp.playlist_items(playlist_id)   
+    song_ids = [track['track']['id'] for track in playlist_tracks['items']]
+    sp.playlist_remove_all_occurrences_of_items(playlist_id, song_ids)
 
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file)
 
-
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-update()
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope, open_browser=False))
