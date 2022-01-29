@@ -13,12 +13,13 @@ user-follow-modify, user-follow-read,
 user-library-modify, user-library-read,
 user-read-email, user-read-private"""
 
-if len(sys.argv) < 1 or len(sys.argv) > 3:
-    print("Usage: python3 updater.py <command>")
-    exit()
-elif len(sys.argv) == 2 and sys.argv[1] == "update":
-    update()
-elif len(sys.argv) == 3 and sys.argv[1] == "loop_album" and isinstance(int(sys.argv[2]), int):
-    loop_current_album(int(sys.argv[2]))
-elif len(sys.argv) == 2 and sys.argv[1] == 'clearrecent':
-    clear_playlist(QUEUE_OF_SHIT)
+if __name__ == "__main__":
+    if len(sys.argv) < 1 or len(sys.argv) > 3:
+        print("Usage: python3 updater.py <command>")
+        exit()
+    elif len(sys.argv) == 2 and sys.argv[1] == "update":
+        update()
+    elif len(sys.argv) == 3 and sys.argv[1] == "loop_album" and isinstance(int(sys.argv[2]), int):
+        loop_current_album(int(sys.argv[2]))
+    elif len(sys.argv) == 2 and sys.argv[1] == 'clearrecent':
+        clear_playlist(QUEUE_OF_SHIT)

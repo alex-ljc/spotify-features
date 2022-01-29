@@ -139,8 +139,8 @@ def check_if_new_saved_song():
 
 def reset_most_recent_song():
     song = find_recently_saved_songs(1, 0)
-    song_id = song[0]['items'][0]['track']['uri']
     os.environ['MOST_RECENT_SONG'] = song_id
+    song_id = song[0]['items'][0]['track']['uri']
     dotenv.set_key(dotenv_file, 'MOST_RECENT_SONG', os.environ['MOST_RECENT_SONG'])
 
 def count_new_songs():
@@ -188,14 +188,25 @@ def loop_current_album(x):
     else:
         album_id = currently_playing_song['item']['album']['id']
     album = sp.album(album_id)
-    for i in range(0, x):
-        add_album_to_queue(album)
-        time.sleep(get_duration_of_album(album))
-        while True:
-            if sp.current_user_playing(limit=1)['item']['track_number'] == album['total_tracks']:
-                continue
-            time.sleep(5)
-    
+    i = 0
+    album_length = get_duration_of_album(album)
+    found_last_song = False
+    sleep_time = album['tracks']['items'][album['total_tracks'] - 1]['duration_ms'] / (3 * 1000) 
+    while i < x:
+        if sp.current_user_playing_track()['item']['track_number'] == album['total_tracks'] and not found_last_song:
+            found_last_song = True
+            sleep_attempts = 0
+            add_album_to_queue(album)
+            i += 1
+            if sleep_attempts > album_length / (sleep_time * 1000 * album['total_tracks'] * 2):
+                raise "Last song in album was never played"
+            
+            time.sleep(sleep_time)
+            sleep_attempts += 1    
+        elif found_last_song and sp.current_user_playing_track()['item']['track_number'] == 0:
+            found_last_song = False
+        
+
 def add_album_to_queue(album):
     for song in album['tracks']['items']:
         sp.add_to_queue(song['uri'])
@@ -211,6 +222,14 @@ def clear_playlist(playlist_id):
     playlist_tracks = sp.playlist_items(playlist_id)   
     song_ids = [track['track']['id'] for track in playlist_tracks['items']]
     sp.playlist_remove_all_occurrences_of_items(playlist_id, song_ids)
+
+def get_album_info(album_id):
+    album_data = sp.album(album_id)
+    print(f"{album_data['artists'][0]['name']}\n  '{album_data['name']}'")
+    
+def get_track_info(track_id):
+    track_data = sp.track(track_id)
+    print(f"{track_data['artists'][0]['name']}\n  '{track_data['name']}'")
 
 dotenv_file = dotenv.find_dotenv()
 dotenv.load_dotenv(dotenv_file)
