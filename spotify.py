@@ -139,8 +139,8 @@ def check_if_new_saved_song():
 
 def reset_most_recent_song():
     song = find_recently_saved_songs(1, 0)
-    os.environ['MOST_RECENT_SONG'] = song_id
     song_id = song[0]['items'][0]['track']['uri']
+    os.environ['MOST_RECENT_SONG'] = song_id
     dotenv.set_key(dotenv_file, 'MOST_RECENT_SONG', os.environ['MOST_RECENT_SONG'])
 
 def count_new_songs():
