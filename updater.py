@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from spotify import update, loop_current_album, clear_playlist, QUEUE_OF_SHIT
+from spotify import * 
 import sys
 
 scope = """ugc-image-upload, 
@@ -23,3 +23,10 @@ if __name__ == "__main__":
         loop_current_album(int(sys.argv[2]))
     elif len(sys.argv) == 2 and sys.argv[1] == 'clearrecent':
         clear_playlist(QUEUE_OF_SHIT)
+    elif len(sys.argv) == 3 and sys.argv[1] == 'changevolume':
+        change_volume(sys.argv[2])
+    elif len(sys.argv) == 2 and sys.argv[1] == 'savecurrent':
+        add_current_track_to_saved()
+    else:
+        print("Usage: python3 updater.py <command>")
+        exit()

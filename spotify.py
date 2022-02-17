@@ -255,6 +255,16 @@ def get_track_info(track_id):
     print(f"{track_data['artists'][0]['name']}\n  '{track_data['name']}'")
 
 
+def change_volume(change):
+    volume = sp.current_playback()['device']['volume_percent']
+    sp.volume(volume + int(change))
+
+
+def add_current_track_to_saved():
+    sp.current_user_saved_tracks_add(
+        [sp.current_user_playing_track()['item']['id']])
+
+
 dotenv_file = dotenv.find_dotenv()
 dotenv.load_dotenv(dotenv_file)
 
