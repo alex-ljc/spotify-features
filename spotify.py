@@ -246,11 +246,9 @@ def clear_playlist(playlist_id):
     song_ids = [track['track']['id'] for track in playlist_tracks['items']]
     sp.playlist_remove_all_occurrences_of_items(playlist_id, song_ids)
 
-
 def get_album_info(album_id):
     album_data = sp.album(album_id)
     print(f"{album_data['artists'][0]['name']}\n  '{album_data['name']}'")
-
 
 def get_track_info(track_id):
     track_data = sp.track(track_id)
