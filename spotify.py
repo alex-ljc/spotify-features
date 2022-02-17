@@ -19,15 +19,22 @@ user-follow-modify, user-follow-read,
 user-library-modify, user-library-read,
 user-read-email, user-read-private"""
 
+<<<<<<< HEAD
 # Finds the most recently added albums in a shitty loop since I don't know how to parse a larger album data set yet
 
+=======
+>>>>>>> fda106528f61c151a667503360d01ef639185c30
 
 def find_recently_saved_albums(amount, off):
     recently_saved_albums = []
     for i in range(0, amount):
         new_album = sp.current_user_saved_albums(
             limit=1, offset=(off + i), market="from_token")
+<<<<<<< HEAD
         recently_saved_albums.append(new_album)
+=======
+        recently_saved_albums.append(new_album['items'][0]['album'])
+>>>>>>> fda106528f61c151a667503360d01ef639185c30
 
     return recently_saved_albums
 
@@ -48,18 +55,32 @@ def find_recently_saved_songs(amount, off):
 
 def get_track_uris_from_albums(album):
     track_uris = []
+<<<<<<< HEAD
     total = album['items'][0]['album']['total_tracks']
 
     for i in range(0, total):
         track = album['items'][0]['album']['tracks']['items'][i]['uri']
         track_uris.append(track)
+=======
+
+    id = album['id']
+    total = get_amount_of_songs_in_albums(album)
+
+    tracks = album['tracks']['items']
+    if total > 50:
+        for i in range(1, total % 50 + 1):
+            tracks += sp.album_tracks(id, offset=50 * i)['items']
+
+    for i in range(0, total):
+        track_uris.append(tracks[i]['uri'])
+>>>>>>> fda106528f61c151a667503360d01ef639185c30
 
     return track_uris
 
 
 # Parses album data to get total songs
 def get_amount_of_songs_in_albums(album):
-    return album['items'][0]['album']['total_tracks']
+    return album['total_tracks']
 
 
 # Adds the most recently saved albums to a playlist
@@ -69,10 +90,16 @@ def replace_recently_added_playlist(amount, offset):
     track_uris = []
     sp.playlist_replace_items(RECENTLY_ADDED, track_uris)
     for album in recently_added_albums:
+<<<<<<< HEAD
         track_uris = track_uris + get_track_uris_from_albums(album)
 
     size = len(track_uris)
 
+=======
+        track_uris += get_track_uris_from_albums(album)
+
+    size = len(track_uris)
+>>>>>>> fda106528f61c151a667503360d01ef639185c30
     split_track_uris = split_list_below_100(track_uris, [])
     for tracks in split_track_uris:
         sp.playlist_add_items(RECENTLY_ADDED, tracks)
@@ -96,8 +123,8 @@ def split_list_below_100(tracks, storage):
 
 # Set environment to most recent album
 def reset_most_recent_album():
-    album = find_recently_saved_albums(1, 0)
-    album_id = album[0]['items'][0]['album']['uri']
+    albums = find_recently_saved_albums(1, 0)
+    album_id = albums[0]['uri']
     os.environ['MOST_RECENT_ALBUM'] = album_id
     dotenv.set_key(dotenv_file, 'MOST_RECENT_ALBUM',
                    os.environ['MOST_RECENT_ALBUM'])
@@ -105,8 +132,8 @@ def reset_most_recent_album():
 
 # Check newest most recent album against stored most recent album. Returns True if there is a new album, false otherwise
 def check_if_new_saved_album():
-    album = find_recently_saved_albums(1, 0)
-    album_id = album[0]['items'][0]['album']['uri']
+    albums = find_recently_saved_albums(1, 0)
+    album_id = albums[0]['uri']
     if (album_id != os.environ['MOST_RECENT_ALBUM']):
         return True
     else:
@@ -118,8 +145,8 @@ def count_new_albums():
     counter = 0
     album_id = 0
     while (album_id != os.environ['MOST_RECENT_ALBUM']):
-        album = find_recently_saved_albums(1, counter)
-        album_id = album[0]['items'][0]['album']['uri']
+        albums = find_recently_saved_albums(1, counter)
+        album_id = albums[0]['uri']
         counter += 1
 
     return counter - 1
@@ -173,8 +200,8 @@ def update():
     dotenv_file = dotenv.find_dotenv()
     dotenv.load_dotenv(dotenv_file)
     if check_if_new_saved_album():
-        update_everything()
         replace_recently_added_playlist(45, 0)
+        update_everything()
         reset_most_recent_album()
 
     if check_if_new_saved_song():
@@ -254,6 +281,7 @@ def get_track_info(track_id):
     print(f"{track_data['artists'][0]['name']}\n  '{track_data['name']}'")
 
 
+<<<<<<< HEAD
 def change_volume(change):
     volume = sp.current_playback()['device']['volume_percent']
     sp.volume(volume + int(change))
@@ -262,6 +290,8 @@ def add_current_track_to_saved():
     sp.current_user_saved_tracks_add([sp.current_user_playing_track()['item']['id']])
 
 
+=======
+>>>>>>> fda106528f61c151a667503360d01ef639185c30
 dotenv_file = dotenv.find_dotenv()
 dotenv.load_dotenv(dotenv_file)
 
