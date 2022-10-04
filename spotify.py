@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# 434bb5fd1deb47a3acfee69505803036!/usr/bin/env python3
 
 import os
 import dotenv
@@ -120,9 +120,11 @@ def check_if_new_saved_album():
 def count_new_albums():
     counter = 0
     album_id = 0
+    print(os.environ['MOST_RECENT_ALBUM'])
     while (album_id != os.environ['MOST_RECENT_ALBUM']):
         albums = find_recently_saved_albums(1, counter)
         album_id = albums[0]['uri']
+        print(albums[0]['name'])
         counter += 1
 
     return counter - 1
@@ -132,6 +134,7 @@ def count_new_albums():
 def update_everything():
     EVERYTHING = "3ZqjihXebfS117lF9bi9FI"
     new_albums = find_recently_saved_albums(count_new_albums(), 0)
+    print(new_albums[0])
     track_uris = []
     for album in new_albums:
         track_uris = track_uris + get_track_uris_from_albums(album)
@@ -162,6 +165,7 @@ def reset_most_recent_song():
 def count_new_songs():
     counter = 0
     song_id = 0
+    print(os.environ['MOST_RECENT_SONG'])
     while (song_id != os.environ['MOST_RECENT_SONG']):
         song = find_recently_saved_songs(1, counter)
         song_id = song[0]['items'][0]['track']['uri']
@@ -182,6 +186,7 @@ def update():
 
     if check_if_new_saved_song():
         update_liked()
+        update_everything()
         reset_most_recent_song()
 
 
@@ -267,8 +272,34 @@ def add_current_track_to_saved():
         [sp.current_user_playing_track()['item']['id']])
 
 
+def debug():
+    print(sp.albums(os.environ['MOST_RECENT_ALBUM']))
+    print(sp.tracks(os.environ['MOST_RECENT_SONG']))
+    counter = 0
+    album_id = 0
+    while (album_id != os.environ['MOST_RECENT_ALBUM'] and counter < 100):
+        albums = find_recently_saved_albums(1, counter)
+        album_id = albums[0]['uri']
+        counter += 1
+
+    if album_id != os.environ['MOST_RECENT_ALBUM']:
+        print("Hit limit, can't find most recent album")
+
+    counter = 0
+    song_id = 0
+    while (song_id != os.environ['MOST_RECENT_SONG'] and counter < 100):
+        song = find_recently_saved_songs(1, counter)
+        song_id = song[0]['items'][0]['track']['uri']
+        counter += 1
+
+    if song_id != os.environ['MOST_RECENT_SONG']:
+        print("Hit limit, can't find most recent song")
+
+
 dotenv_file = dotenv.find_dotenv()
 dotenv.load_dotenv(dotenv_file)
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     scope=scope, open_browser=False))
+
+debug()
