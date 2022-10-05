@@ -134,7 +134,6 @@ def count_new_albums():
 def update_everything():
     EVERYTHING = "3ZqjihXebfS117lF9bi9FI"
     new_albums = find_recently_saved_albums(count_new_albums(), 0)
-    print(new_albums[0])
     track_uris = []
     for album in new_albums:
         track_uris = track_uris + get_track_uris_from_albums(album)
@@ -186,7 +185,6 @@ def update():
 
     if check_if_new_saved_song():
         update_liked()
-        update_everything()
         reset_most_recent_song()
 
 
