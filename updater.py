@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from spotify import * 
+from spotify import *
 import sys
 
 scope = """ugc-image-upload, 
@@ -21,6 +21,8 @@ if __name__ == "__main__":
         update()
     elif len(sys.argv) == 3 and sys.argv[1] == "loop_album" and isinstance(int(sys.argv[2]), int):
         loop_current_album(int(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "loop_current_album" and isinstance(int(sys.argv[2]), int):
+        loop_currently_playing_album(int(sys.argv[2]))
     elif len(sys.argv) == 2 and sys.argv[1] == 'clearrecent':
         clear_playlist(QUEUE_OF_SHIT)
     elif len(sys.argv) == 3 and sys.argv[1] == 'changevolume':

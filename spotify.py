@@ -1,5 +1,4 @@
 # 434bb5fd1deb47a3acfee69505803036!/usr/bin/env python3
-
 import os
 import dotenv
 import spotipy
@@ -177,18 +176,21 @@ def count_new_songs():
 
 def update():
     dotenv_file = dotenv.find_dotenv()
+    amount = 60
+    offset = 0
+
     dotenv.load_dotenv(dotenv_file)
     if check_if_new_saved_album():
-        replace_recently_added_playlist(45, 0)
+        replace_recently_added_playlist(amount, offset)
         update_everything()
         reset_most_recent_album()
 
     if check_if_new_saved_song():
-        update_liked()
+        update_liked(amount, offset)
         reset_most_recent_song()
 
 
-def update_liked():
+def update_liked(amount, offset):
     LIKED = "1Eb6PKpnm0iz68zmNkT5rY"
     new_songs = find_recently_saved_songs(count_new_songs(), 0)
     tracks = []
@@ -200,10 +202,25 @@ def update_liked():
     for tracks in split_track_uris:
         sp.playlist_add_items(LIKED, tracks)
 
+    RECENTLY_ADDED = "3BZP1mB69SWnSNCy4nfxXX"
+    recently_added_albums = find_recently_saved_albums(amount, offset)
+    recent_tracks_uris = []
+    for album in recently_added_albums:
+        recent_track_uris += get_track_uris_from_albums(album)
+
+    for tracks in split_track_uris:
+        if tracks not in recent_tracks_uris:
+            sp.playlist_add_items(RECENTLY_ADDED, tracks)
+
     print(f"Updated liked with {len(tracks)} songs")
 
+    EVERYTHING = "3ZqjihXebfS117lF9bi9FI"
+    for tracks in split_track_uris:
+        if tracks not in recent_tracks_uris:
+            sp.playlist_add_items(EVERYTHING, tracks)
 
-def loop_current_album(x):
+
+def loop_currently_playing_album(x):
     currently_playing_song = sp.current_user_playing_track()
     if currently_playing_song == None:
         currently_playing_song = sp.current_user_recently_played(limit=1)
@@ -211,6 +228,8 @@ def loop_current_album(x):
     else:
         album_id = currently_playing_song['item']['album']['id']
     album = sp.album(album_id)
+    add_album_to_queue()
+    loop_current_album(x - 1)
     i = 0
     album_length = get_duration_of_album(album)
     found_last_song = False
@@ -229,6 +248,18 @@ def loop_current_album(x):
             sleep_attempts += 1
         elif found_last_song and sp.current_user_playing_track()['item']['track_number'] == 0:
             found_last_song = False
+
+
+def loop_current_album(x):
+    currently_playing_song = sp.current_user_playing_track()
+    if currently_playing_song == None:
+        currently_playing_song = sp.current_user_recently_played(limit=1)
+        album_id = currently_playing_song['items'][0]['track']['album']['uri']
+    else:
+        album_id = currently_playing_song['item']['album']['id']
+    album = sp.album(album_id)
+    add_album_to_queue()
+    loop_current_album(x - 1)
 
 
 def add_album_to_queue(album):
@@ -299,4 +330,3 @@ dotenv.load_dotenv(dotenv_file)
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     scope=scope, open_browser=False))
-
