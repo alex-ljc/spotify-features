@@ -176,7 +176,7 @@ def count_new_songs():
 
 def update():
     dotenv_file = dotenv.find_dotenv()
-    amount = 60
+    amount = 75
     offset = 0
 
     dotenv.load_dotenv(dotenv_file)
@@ -228,8 +228,6 @@ def loop_currently_playing_album(x):
     else:
         album_id = currently_playing_song['item']['album']['id']
     album = sp.album(album_id)
-    add_album_to_queue()
-    loop_current_album(x - 1)
     i = 0
     album_length = get_duration_of_album(album)
     found_last_song = False
@@ -258,8 +256,8 @@ def loop_current_album(x):
     else:
         album_id = currently_playing_song['item']['album']['id']
     album = sp.album(album_id)
-    add_album_to_queue()
-    loop_current_album(x - 1)
+    add_album_to_queue(album)
+    loop_currently_playing_album(x - 1)
 
 
 def add_album_to_queue(album):
