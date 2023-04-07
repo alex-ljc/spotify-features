@@ -327,4 +327,4 @@ dotenv_file = dotenv.find_dotenv()
 dotenv.load_dotenv(dotenv_file)
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    scope=scope, open_browser=False))
+    scope=scope, open_browser=True))
